@@ -1,4 +1,3 @@
-from types import SimpleNamespace
 import boto3
 import sys
 import logging
