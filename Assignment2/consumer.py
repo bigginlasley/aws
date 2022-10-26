@@ -120,7 +120,3 @@ if __name__ == '__main__':
             time_out += 1
             logging.info(f'no objects found attempt: {time_out}')
             time.sleep(0.1)
-
-
-
-
