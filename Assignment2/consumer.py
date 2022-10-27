@@ -54,7 +54,6 @@ def dest_bucket_insert(client, data_serialized, dest_name, owner, id, item_key):
     try:
         client.put_object(Body=data_serialized, Bucket=dest_name, Key=f'widgets/{owner}/{id}')
         logging.info(f'added item {item_key} to bucket {dest_name}')
-
     except Exception:
         logging.info(f'Failed to insert {item_key} into destination bucket')
         raise Exception
@@ -112,7 +111,7 @@ if __name__ == '__main__':
                 # add to database
                 if(request_type == 'db'):
                     new_id, datadict = db_prep(obj_body)
-                    # add to database
+                    # check to make sure it isn't none
                     if(datadict):
                         table_dest.put_item(Item = datadict)
                         logging.info(f'adding {single_key} to database')
