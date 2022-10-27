@@ -51,19 +51,6 @@ def db_prep(data):
 
 # add object to destination bucket
 def dest_bucket_insert(client, data_serialized, dest_name, owner, id, item_key):
-
-    print('dest_bucket')
-    print('data_serialized')
-    print(data_serialized)
-    print('dest_name')
-    print(dest_name)
-    print('owner')
-    print(owner)
-    print('id')
-    print(id)
-    print('item_key')
-    print(item_key)
-
     try:
         client.put_object(Body=data_serialized, Bucket=dest_name, Key=f'widgets/{owner}/{id}')
         logging.info(f'added item {item_key} to bucket {dest_name}')
