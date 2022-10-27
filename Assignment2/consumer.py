@@ -15,18 +15,19 @@ def data_prep(body):
     if body:
         # found a better way to do json loading https://medium.com/@shashank_iyer/simplify-json-access-with-simplenamespace-e91f5a09345b
         data = json.loads(body, object_hook= lambda x: SimpleNamespace(**x))
-        owner = (data.owner.upper()).replace(" ", "-")
+        owner = (data.owner.lower()).replace(" ", "-")
         return data, owner
     else:
         return None, None
         
-# function to serialize data and do pretty print
+# function to serialize data, decode, and do pretty print
 def json_prep(body):
     data = json.loads(body.decode('utf8').replace("'",'"'))
     serialized_data = json.dumps(data, indent=4)
     return serialized_data
 
-def db_prep(data, table):
+# cleans up data and inserts it into dynamodb
+def db_prep(data):
     # have to change widgetID to id otherwise put_item throws an error
     new_id = 'id'
     old_id = 'widgetId'
@@ -35,7 +36,7 @@ def db_prep(data, table):
 
     # only want to process creates
     if datadict['type'] != 'create':
-        return
+        return new_id, None
     # remove type from object
     datadict.pop('type')
     # check if object has otherAttributes and flatten them
@@ -45,19 +46,30 @@ def db_prep(data, table):
             datadict[i['name']] = i['value']
         # remove the otherAttributes section
         datadict.pop('otherAttributes')
-    # add to database
-    table.put_item(Item = datadict)
-    logging.info(f'adding {datadict[new_id]} to database')
+    return new_id, datadict
 
 
 # add object to destination bucket
-def dest_bucket_insert(client, data_serialized, dest_name, owner, id):
+def dest_bucket_insert(client, data_serialized, dest_name, owner, id, item_key):
+
+    print('dest_bucket')
+    print('data_serialized')
+    print(data_serialized)
+    print('dest_name')
+    print(dest_name)
+    print('owner')
+    print(owner)
+    print('id')
+    print(id)
+    print('item_key')
+    print(item_key)
+
     try:
         client.put_object(Body=data_serialized, Bucket=dest_name, Key=f'widgets/{owner}/{id}')
-        logging.info(f'added item {id} to bucket {dest_name}')
+        logging.info(f'added item {item_key} to bucket {dest_name}')
 
     except Exception:
-        logging.info(f'Failed to insert {id} into destination bucket')
+        logging.info(f'Failed to insert {item_key} into destination bucket')
         raise Exception
 
 
@@ -97,9 +109,9 @@ if __name__ == '__main__':
             # delete from resource bucket
             try:
                 client.delete_object(Bucket=which_resource, Key=single_key)
-                logging.info('deleting from requests')
+                logging.info(f'deleting {single_key} from requests')
             except Exception:
-                logging.info('Failed to delete object from requests')
+                logging.info(f'Failed to delete {single_key} from requests')
                 raise Exception
             # prep data
             data, owner = data_prep(obj_body)
@@ -109,10 +121,14 @@ if __name__ == '__main__':
                 # add to bucket
                 if(request_type == 'bucket'):
                     serialized_data =  json_prep(obj_body)
-                    dest_bucket_insert(client, serialized_data, dest_name, owner, data.widgetId)
+                    dest_bucket_insert(client, serialized_data, dest_name, owner, data.widgetId, single_key)
                 # add to database
                 if(request_type == 'db'):
-                    db_prep(obj_body, table_dest)
+                    new_id, datadict = db_prep(obj_body)
+                    # add to database
+                    if(datadict):
+                        table_dest.put_item(Item = datadict)
+                        logging.info(f'adding {single_key} to database')
 
         # increment time out feature and sleep 
         else:
