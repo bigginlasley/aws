@@ -11,13 +11,12 @@ body = b'{"type":"update","requestId":"f2989d03-bc9c-4042-934f-552c076eb2df","wi
 def test_data_prep():
     expected_owner = 'john-jones'
     data_actual, owner_actual = data_prep(body)
+    # didn't have the namespace when I tried earlier so I had to add this to get it working
     expected_data = json.loads(body, object_hook= lambda x: SimpleNamespace(**x))
     assert data_actual == expected_data
     assert owner_actual == expected_owner
 
 def test_json_prep():
-    # second_body = b'{"type":"update","requestId":"f2989d03-bc9c-4042-934f-552c076eb2df","widgetId":"ad0bb9e1-28e9-46e0-ad08-8192f4d3b6c6","owner":"John Jones","description":"QQGRLNZY","otherAttributes":[{"name":"color","value":"red"},{"name":"size-unit","value":"cm"},{"name":"width","value":"699"},{"name":"width-unit","value":"cm"},{"name":"length","value":"649"},{"name":"price","value":"73.03"},{"name":"quantity","value":"76"},{"name":"note","value":"UFYFPRFURTHCJJZGHUWDMILVMLWVUOGYJYDOAPPKMXAPXGKMVHETWWFRQTBTGVWSODFDRZKIPAGZQBWKDJVQLXUHRSQKITMECYOYCAMDVIMODOEZQXPGZYXOXPEGQHIKPCOFMILFLVLSFKBITRAKXFFIHQNFUMTOIDLLKHYEMLGBQBDFXXRGJMXELQUDXUQNEZPXSSPHGBQFBBBXYDWLZZBPCIRGNQHHYMEXYLNBTHMFKDQDKNGHDPFDVCQPBNNIIGCBQJJVKXPAHJQHUFSSBWIHNWAXYOQKAWVRSHPEWBJTQKFBKCJWNBUIBPYQUQTIXKLZQLGYITHEDOWAUCUDZOAICRKAJFMPPQAGGEVIISRXGGIIRLIQRTXWVSMRD"}]}'
-
     actual_serial = json_prep(body)
     expected_serialized = str({
     "type": "update",
@@ -60,8 +59,10 @@ def test_json_prep():
         }
     ]
 })
-    actual_serial = actual_serial.translate({ord(c): None for c in string.whitespace})
-    expected_serialized = expected_serialized.translate({ord(c): None for c in string.whitespace})
+    # had to clean up json
+    # had to remove whitespace and \"
+    actual_serial = actual_serial.translate({ord(i): None for i in string.whitespace})
+    expected_serialized = expected_serialized.translate({ord(i): None for i in string.whitespace})
     expected_serialized = expected_serialized.replace("'", "\"")
     assert str(actual_serial) == str(expected_serialized)
 
