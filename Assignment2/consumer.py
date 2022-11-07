@@ -78,13 +78,13 @@ if __name__ == '__main__':
         current = []
 
         if (sqs_vs_bucket == 'sqs'):
-            # TODO add in a storage so I can pull in 10 requests but only do 1 at a time
+            # if messages is empty grab more
             if not messages:
-                # remove from storage after completion
+                # request up to 10 messages
                 logging.info(f'SQS Retrevial')
                 s_queue = sqs.get_queue_by_name(QueueName=request_resource)
                 messages = s_queue.receive_messages(MessageAttributeNames=['All'], MaxNumberOfMessages=10, WaitTimeSeconds=2)
-            # current = messages[0]
+            # grab one item from messages
             for m in messages:
                 current = m
                 break
@@ -99,7 +99,6 @@ if __name__ == '__main__':
                 current = [obj,key]
                 break
         # check to see if we have an actual object
-        # print(current)
         if(current):
             # reset time out process
             time_out = 0
@@ -108,10 +107,10 @@ if __name__ == '__main__':
             # get object key and body
                 single_key = str(current[0].key)
                 obj_body = current[0].get()['Body'].read()
+            # get the key and body
             elif(sqs_vs_bucket == 'sqs'):
                 single_key = current.message_id
                 obj_body = bytes(current.body, 'utf-8')
-                # print(type(current.body))
 
             logging.info(f'Grabbed {single_key} from request')
 
@@ -123,6 +122,7 @@ if __name__ == '__main__':
                 except Exception:
                     logging.info(f'Failed to delete {single_key} from requests')
                     raise Exception
+            # delete item from sqs
             if (sqs_vs_bucket == 'sqs'):
                 try:
                     logging.info(f'Deleting {single_key} from s_queue')
@@ -138,14 +138,15 @@ if __name__ == '__main__':
             if(data != None and owner != None):
                 # add to bucket
                 if(request_type == 'bucket'):
-                    # print(data.type)
-                    # check to see if create/update/delete
+                    # creating a new bucket item
                     if(data.type == 'create'):
                         serialized_data = json_prep(obj_body)
                         dest_bucket_insert(client, serialized_data, dest_name, owner, data.widgetId, single_key)
+                    # deleting bucket item
                     elif(data.type == 'delete'):
                         logging.info(f'DELETING {single_key} from bucket')
                         client.delete_object(Bucket=dest_name, Key=f'widgets/{owner}/{data.widgetId}')
+                    # updating bucket item
                     elif(data.type == 'update'):
                         logging.info(f'DELETING {single_key} from bucket')
                         client.delete_object(Bucket=dest_name, Key=f'widgets/{owner}/{data.widgetId}')
@@ -158,10 +159,11 @@ if __name__ == '__main__':
                 # add to database
                 if(request_type == 'db'):
                     new_id, datadict, command = db_prep(obj_body)
-                    # check to see if create or update or delete
+                    # creating new database entry
                     if(command == 'create'):
                         table_dest.put_item(Item = datadict)
                         logging.info(f'adding {single_key} to database')
+                    # deleting database entry
                     elif(command =='delete'):
                         try:
                             table_dest.delete_item(Key={new_id:datadict[new_id]})
@@ -169,8 +171,8 @@ if __name__ == '__main__':
                         except Exception:
                             logging.info(f'FAILED to delete {single_key} from database')
                             raise Exception
+                    # updating database entry
                     elif(command == 'update'):
-                        # print(new_id, ':', datadict[new_id])
                         try:
                             logging.info(f'deleting {single_key} from database')
                             table_dest.delete_item(Key={new_id:datadict[new_id]})
