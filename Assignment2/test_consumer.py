@@ -66,13 +66,19 @@ def test_json_prep():
     expected_serialized = expected_serialized.replace("'", "\"")
     assert str(actual_serial) == str(expected_serialized)
 
-def test_db_prep():
-    expected_id = 'id'
-    body_2 = b'{"type":"create","requestId":"6c37a3ff-26d8-4b2a-900f-2d614267e0e4","widgetId":"3750be35-9074-4879-bb43-759d38263868","owner":"Henry Hops","label":"UMNWEHK","description":"BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD","otherAttributes":[{"name":"size","value":"314"},{"name":"size-unit","value":"cm"},{"name":"width","value":"637"},{"name":"price","value":"59.09"},{"name":"vendor","value":"S"}]}'
-    expected_datadict = {'requestId': '6c37a3ff-26d8-4b2a-900f-2d614267e0e4', 'owner': 'Henry Hops', 'label': 'UMNWEHK', 'description': 'BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD', 'id': '3750be35-9074-4879-bb43-759d38263868', 'size': '314', 'size-unit': 'cm', 'width': '637', 'price': '59.09', 'vendor': 'S'}
-    actual_id, actual_datadict = db_prep(body_2)
+@pytest.mark.parametrize("body_2, expected_datadict, expected_id, expected_command", [(b'{"type":"create","requestId":"6c37a3ff-26d8-4b2a-900f-2d614267e0e4","widgetId":"3750be35-9074-4879-bb43-759d38263868","owner":"Henry Hops","label":"UMNWEHK","description":"BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD","otherAttributes":[{"name":"size","value":"314"},{"name":"size-unit","value":"cm"},{"name":"width","value":"637"},{"name":"price","value":"59.09"},{"name":"vendor","value":"S"}]}',
+{'requestId': '6c37a3ff-26d8-4b2a-900f-2d614267e0e4', 'owner': 'Henry Hops', 'label': 'UMNWEHK', 'description': 'BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD', 'id': '3750be35-9074-4879-bb43-759d38263868', 'size': '314', 'size-unit': 'cm', 'width': '637', 'price': '59.09', 'vendor': 'S'},
+ 'id', 'create'), (b'{"type":"update","requestId":"6c37a3ff-26d8-4b2a-900f-2d614267e0e4","widgetId":"3750be35-9074-4879-bb43-759d38263868","owner":"Henry Hops","label":"UMNWEHK","description":"BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD","otherAttributes":[{"name":"size","value":"314"},{"name":"size-unit","value":"cm"},{"name":"width","value":"637"},{"name":"price","value":"59.09"},{"name":"vendor","value":"S"}]}',
+{'requestId': '6c37a3ff-26d8-4b2a-900f-2d614267e0e4', 'owner': 'Henry Hops', 'label': 'UMNWEHK', 'description': 'BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD', 'id': '3750be35-9074-4879-bb43-759d38263868', 'size': '314', 'size-unit': 'cm', 'width': '637', 'price': '59.09', 'vendor': 'S'},
+ 'id', 'update'),(b'{"type":"delete","requestId":"6c37a3ff-26d8-4b2a-900f-2d614267e0e4","widgetId":"3750be35-9074-4879-bb43-759d38263868","owner":"Henry Hops","label":"UMNWEHK","description":"BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD","otherAttributes":[{"name":"size","value":"314"},{"name":"size-unit","value":"cm"},{"name":"width","value":"637"},{"name":"price","value":"59.09"},{"name":"vendor","value":"S"}]}',
+{'requestId': '6c37a3ff-26d8-4b2a-900f-2d614267e0e4', 'owner': 'Henry Hops', 'label': 'UMNWEHK', 'description': 'BOMKUEDKXDDIPCMMDOMTQWCOVFLDKLMZDQMGEERBTODSVWIGZVYXRXWMTQZHSHYYQUITXESHOD', 'id': '3750be35-9074-4879-bb43-759d38263868', 'size': '314', 'size-unit': 'cm', 'width': '637', 'price': '59.09', 'vendor': 'S'},
+ 'id', 'delete')])
+
+def test_db_prep(body_2, expected_datadict, expected_id, expected_command):
+    actual_id, actual_datadict, actual_command = db_prep(body_2)
     assert expected_datadict == actual_datadict
     assert expected_id == actual_id
+    assert expected_command == actual_command
 
 def test_dest_bucket_insert():
     client = MagicMock()
