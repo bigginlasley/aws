@@ -78,7 +78,6 @@ if __name__ == '__main__':
     messages = []
 
     logging.info('entering while loop')
-    print('entering while loop')
     while time_out < 5:
 
         current = []
@@ -88,7 +87,6 @@ if __name__ == '__main__':
             if not messages:
                 # request up to 10 messages
                 logging.info(f'SQS Retrevial')
-                # print(f'SQS Retrevial')
                 s_queue = sqs.get_queue_by_name(QueueName=request_resource)
                 messages = s_queue.receive_messages(MessageAttributeNames=['All'], MaxNumberOfMessages=10, WaitTimeSeconds=2)
             # grab one item from messages
@@ -100,7 +98,6 @@ if __name__ == '__main__':
             # get all the objects
             all_obj = request_bucket.objects.all()
             logging.info(f'BUCKET Retrevial')
-            # print(f'BUCKET Retrevial')
         # I only want 1 object as per instructions
             for obj in all_obj:
                 key = str(obj.key)
@@ -121,7 +118,6 @@ if __name__ == '__main__':
                 obj_body = bytes(current.body, 'utf-8')
 
             logging.info(f'Grabbed {single_key} from request')
-            # print()
 
             # delete from resource bucket
             if (sqs_vs_bucket == 'bucket'):
