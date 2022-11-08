@@ -59,7 +59,12 @@ def dest_bucket_insert(client, data_serialized, dest_name, owner, id, item_key):
 
 
 if __name__ == '__main__':
+    # setting up logger stuff
     logging.basicConfig(filename='consumer.log', filemode='w', level=logging.INFO)
+    console_handler = logging.StreamHandler(sys.stdout)
+    logFormatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s]  %(message)s")
+    console_handler.setFormatter(logFormatter)
+    logging.getLogger().addHandler(console_handler)
 
     # get command line arguments
     request_resource = sys.argv[1]
@@ -73,6 +78,7 @@ if __name__ == '__main__':
     messages = []
 
     logging.info('entering while loop')
+    print('entering while loop')
     while time_out < 5:
 
         current = []
@@ -82,6 +88,7 @@ if __name__ == '__main__':
             if not messages:
                 # request up to 10 messages
                 logging.info(f'SQS Retrevial')
+                # print(f'SQS Retrevial')
                 s_queue = sqs.get_queue_by_name(QueueName=request_resource)
                 messages = s_queue.receive_messages(MessageAttributeNames=['All'], MaxNumberOfMessages=10, WaitTimeSeconds=2)
             # grab one item from messages
@@ -93,6 +100,7 @@ if __name__ == '__main__':
             # get all the objects
             all_obj = request_bucket.objects.all()
             logging.info(f'BUCKET Retrevial')
+            # print(f'BUCKET Retrevial')
         # I only want 1 object as per instructions
             for obj in all_obj:
                 key = str(obj.key)
@@ -113,6 +121,7 @@ if __name__ == '__main__':
                 obj_body = bytes(current.body, 'utf-8')
 
             logging.info(f'Grabbed {single_key} from request')
+            # print()
 
             # delete from resource bucket
             if (sqs_vs_bucket == 'bucket'):
@@ -175,8 +184,10 @@ if __name__ == '__main__':
                     elif(command == 'update'):
                         try:
                             logging.info(f'deleting {single_key} from database')
+                            # remove the old entry from database
                             table_dest.delete_item(Key={new_id:datadict[new_id]})
                             logging.info(f'adding {single_key} to database')
+                            # add in the new entry to the database
                             table_dest.put_item(Item = datadict)
                         except Exception:
                             logging.info(f'FAILED to update {single_key} to the database')

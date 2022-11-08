@@ -7,7 +7,8 @@ from types import SimpleNamespace
 import os
 
 #global variables
-
+# couldn't get the aws folder to mount in my docker image
+# I access my tokens via environment variables
 a_a_key = os.environ['AWS_ACCESS_KEY_ID']
 a_s_key = os.environ['AWS_SECRET_ACCESS_KEY']
 a_s_token = os.environ['AWS_SESSION_TOKEN']
@@ -67,6 +68,7 @@ def dest_bucket_insert(client, data_serialized, dest_name, owner, id, item_key):
 
 
 if __name__ == '__main__':
+    # setting up logger stuff
     logging.basicConfig(filename='consumer.log', filemode='w', level=logging.INFO)
     console_handler = logging.StreamHandler(sys.stdout)
     logFormatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s]  %(message)s")
@@ -191,8 +193,10 @@ if __name__ == '__main__':
                     elif(command == 'update'):
                         try:
                             logging.info(f'deleting {single_key} from database')
+                            # remove the old entry from database
                             table_dest.delete_item(Key={new_id:datadict[new_id]})
                             logging.info(f'adding {single_key} to database')
+                            # add in the new entry to the database
                             table_dest.put_item(Item = datadict)
                         except Exception:
                             logging.info(f'FAILED to update {single_key} to the database')
